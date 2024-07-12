@@ -1,6 +1,9 @@
 ![banner](https://github.com/user-attachments/assets/ef6e3b2a-e9c7-47d1-a39e-ec6d169e302b)
 
 ## What is Azure Virtual Machine?
+Virtual machines play an essential role in cloud computing, offering users full control over the operating system. Azure virtual machines provide the flexibility of virtualisation, allowing users to run applications and customise software without having to buy and maintain the physical hardware that runs the virtual machine. 
+
+Below I will walk you through the process of creating and deploying a Linux virtual machine via the Azure portal. 
 
 ## Requirements 
 **Azure Account:** If you don't already have an Azure subscription, create a free account using the following link: https://azure.microsoft.com/en-gb/free/
