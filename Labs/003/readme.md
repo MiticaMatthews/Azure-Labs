@@ -10,7 +10,11 @@ In this lab, I will walk you through the process of deploying an Ubuntu Virtual 
 I will be using the terminal on my local machine for this task. 
  
 ## Create an Ubuntu Virtual Machine Using Azure CLI
-1. Sign in to the [Azure Portal](https://portal.azure.com/)
+1. Sign in to the [Azure Portal](https://portal.azure.com/) and authenticate your account via your terminal by running the following command:
+
+```az login```
+
+You will not be able to run commands in Azure using the CLI without completing the above step. 
 
 ### Create an Azure Resource Group
 Before we can proceed with creating our Azure Virutal Machine, we must create a resource group with the ```az group create``` command. When we create, provision, deploy etc. a resource, it must be assigned to a resource group. Resource groups are used to organise resources in Azure. Think of a resource group as a folder that helps you organise and manage your resources efficiently. 
