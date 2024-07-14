@@ -241,7 +241,7 @@ PowerState/running  Info     VM running
 To get the power state of *all* VMs in a resource group, run: 
 
 ```
-az vm get-instance-view --ids $(az vm list --resource-group rg-VM-03 --query "[].id" -output tsv)
+az vm get-instance-view --ids $(az vm list --resource-group rg-VM-03 --query "[].id" --output tsv)
 ```
 
 ## Manage Virtual Machine 
