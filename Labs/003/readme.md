@@ -32,12 +32,12 @@ Next, let's create an Ubuntu virtual machine. I will break down each part of the
 
 ```
 az vm create \
-  --resource-group rg-VM-01 \
-  --name myUbuntuVM01 \
-  --image Ubuntu2204 \
-  --admin-username azureuser \
-  --generate-ssh-keys\
-  --public-ip-sku Standard
+--resource-group rg-VM-01 \
+--name myUbuntuVM01 \
+--image Ubuntu2204 \
+--admin-username azureuser \
+--generate-ssh-keys\
+--public-ip-sku Standard
 ```
 
 ```rg-VM-01```: This is the resource group we created in the previous step. 
@@ -100,7 +100,7 @@ az vm create \
 --image MicrosoftWindowsServer:WindowsServer:2022-Datacenter:latest \
 --admin-username azureuser \
 --generate-ssh-keys \
- --public-ip-sku Standard \
+--public-ip-sku Standard \
 ```
 ## Understand Virtual Machine Sizes 
 When you create an Azure virtual machine, its size determines how much compute power it gets, including CPY, GPU and memory. It is therefore essential to choose a size that aligns with your expected workload. If your needs change, you can resize the virtual machine later. 
@@ -149,13 +149,13 @@ Example partial output:
 
 ```
 az vm create \
-  --resource-group rg-VM-03 \
-  --name myUbuntuVM02 \
-  --image Ubuntu2204 \
-  --size Standard_D2ds_v4 \
-  --admin-username azureuser \
-  --generate-ssh-keys\
-  --public-ip-sku Standard
+--resource-group rg-VM-03 \
+--name myUbuntuVM02 \
+--image Ubuntu2204 \
+--size Standard_D2ds_v4 \
+--admin-username azureuser \
+--generate-ssh-keys\
+--public-ip-sku Standard
 ```
 
 ### Resize a Virtual Machine
@@ -170,7 +170,15 @@ Next, before resizing our virtual machine, we need to view the list of available
 ```
 az vm list-vm-resize-options --resource-group rg-VM-03 --name myUbuntuVM02 --query [].name --output table
 ```
-The above command lists VM sizes for our VM *myUbuntuVM02* in the resource group *rg-VM-03* region. 
+The above command lists VM sizes for a specific VM *myUbuntuVM02* in the resource group *rg-VM-03* region. 
+
+To list the available sizes for *all* VMs in the resource group, run: 
+
+```
+az vm list-vm-resize-options --ids $(az vm list --resource-group rg-VM-03 --query "[].id" --output tsv)
+```
+
+*Note: Remember to replace the resource group value with the name you chose for your resource group.*
 
 If the desired size is available, you can resize the virtual machine while it's powered on, but it will reboot during the operation. Use the `az vm resize` command:
 
@@ -228,6 +236,12 @@ Example output:
 Code                Level    DisplayStatus
 ------------------  -------  ---------------
 PowerState/running  Info     VM running
+```
+
+To get the power state of *all* VMs in a resource group, run: 
+
+```
+az vm get-instance-view --ids $(az vm list --resource-group rg-VM-03 --query "[].id" -output tsv)
 ```
 
 ## Manage Virtual Machine 
