@@ -95,7 +95,7 @@ In the command example below, we are creating a windows virtual machine, and usi
 
 ```
 az vm create \
---resource-group rg-VM2-01 \
+--resource-group rg-VM-02 \
 --name myWindowsVM \
 --image MicrosoftWindowsServer:WindowsServer:2022-Datacenter:latest \
 --admin-username azureuser \
@@ -103,7 +103,132 @@ az vm create \
  --public-ip-sku Standard \
 ```
 ## Understand Virtual Machine Sizes 
+When you create an Azure virtual machine, its size determines how much compute power it gets, including CPY, GPU and memory. It is therefore essential to choose a size that aligns with your expected workload. If your needs change, you can resize the virtual machine later. 
 
+### Virtual Machine Sizes 
+Below is a breakdown of different VM sizes and their use cases: 
+
+| Type                      |    Description       |
+|--------------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| [General purpose](../sizes-general.md)         | Balanced CPU-to-memory. Ideal for dev/test environments, small to medium applications, and data solutions.  |
+| [Compute optimised](../sizes-compute.md)    | High CPU-to-memory. Suitable for medium traffic applications, network appliances, and batch processing.        |
+| [Memory optimised](../sizes-memory.md)     | High memory-to-core ratio. Great for relational databases, medium to large caches, and in-memory analytics.                 |
+| [Storage optimised](../sizes-storage.md)      | High disk throughput and IO. Perfect for Big Data, SQL, and NoSQL databases. |
+| [GPU](../sizes-gpu.md)          | Specialised VMs for heavy graphic rendering and video editing.       |
+| [High performance](../sizes-hpc.md) | Our most powerful CPU VMs with optional high-throughput network interfaces (RDMA). |
+
+### Find Available Virtual Machine Sizes 
+To see a list of VM sizes available in a specific region, run the `az vm list-sizes` command. Here's how to do it:
+
+```
+az vm list-sizes --location ukwest --output table 
+```
+Example partial output: 
+
+```output
+  MaxDataDiskCount    MemoryInMb  Name                      NumberOfCores    OsDiskSizeInMb    ResourceDiskSizeInMb
+------------------  ------------  ----------------------  ---------------  ----------------  ----------------------
+4                   8192          Standard_D2ds_v4           2                1047552           76800
+8                   16384         Standard_D4ds_v4           4                1047552           153600
+16                  32768         Standard_D8ds_v4           8                1047552           307200
+32                  65536         Standard_D16ds_v4          16               1047552           614400
+32                  131072        Standard_D32ds_v4          32               1047552           1228800
+32                  196608        Standard_D48ds_v4          48               1047552           1843200
+32                  262144        Standard_D64ds_v4          64               1047552           2457600
+4                   8192          Standard_D2ds_v5           2                1047552           76800
+8                   16384         Standard_D4ds_v5           4                1047552           153600
+16                  32768         Standard_D8ds_v5           8                1047552           307200
+32                  65536         Standard_D16ds_v5          16               1047552           614400
+32                  131072        Standard_D32ds_v5          32               1047552           1228800
+32                  196608        Standard_D48ds_v5          48               1047552           1843200
+32                  262144        Standard_D64ds_v5          64               1047552           2457600
+32                  393216        Standard_D96ds_v5          96               1047552           3686400
+```
+
+### Create a Virtual Machine with a Specific Size
+
+```
+az vm create \
+  --resource-group rg-VM-03 \
+  --name myUbuntuVM02 \
+  --image Ubuntu2204 \
+  --size Standard_D2ds_v4 \
+  --admin-username azureuser \
+  --generate-ssh-keys\
+  --public-ip-sku Standard
+```
+
+### Resize a Virtual Machine
+Once your virtual machine has been deployed, you may want to resize it to adjust resource allocation. To view the current size of a VM, run the `az vm show` command: 
+
+```
+az vm show --resource-group rg-VM-03 --name myUbuntuVM02 --query hardwareProfile.vmSize
+```
+
+Next, before resizing our virtual machine, we need to view the list of available VM sizes on the hardware cluster where the VM is hosted
+
+```
+az vm list-vm-resize-options --resource-group rg-VM-03 --name myUbuntuVM02 --query [].name --output table
+```
+The above command lists VM sizes for our VM *myUbuntuVM02* in the resource group *rg-VM-03* region. 
+
+If the desired size is available, you can resize the virtual machine while it's powered on, but it will reboot during the operation. Use the `az vm resize` command:
+
+```
+az vm resize --resource-group rg-VM-03 --name myUbuntuVM02 --size Standard_D3_v2
+```
+
+If the desired size is not listed or available on the current Azure cluster, you will need to deallocate the virtual machine before resizing. This can be done by using the `az vm deallocate` command. 
+
+*Note: when you power the VM back on, any data on the temporary disk may be lost, and the IP address could change unless you assigned a static IP to the virtual machine.*
+
+To deallocate the virtual machine, run: 
+```
+az vm deallocate --resource-group rg-VM-03 --name myUbuntuVM02 
+```
+
+Once the virtual machine is deallocated, you can proceed with resizing it:
+```
+az vm resize --resource-group rg-VM-03 --name myUbuntuVM02 --size Standard_D12_v2
+```
+
+Finally, after resizing it, you can restart the virtual machine again:
+```
+az vm start --resource-group rg-VM-03 --name myUbuntuVM02
+```
+
+## Virtual Machine Power States
+An Azure virtual machine can go through various different states. These states represent the last known state of the VM. 
+
+### Power States
+
+| Power State | Description | Billing
+|----|----|----|
+| Creating | The virtual machine is allocating resources. | Not billed* |
+| Starting | The virtual machine is being started. | Billed |
+| Running | The virtual machine is up and running. | Billed |
+| Stopping | The virtual machine is being stopped. | Billed |
+| Stopped | The virtual machine is stopped. Virtual machines in the stopped state still incur compute charges.  | Billed |
+| Deallocating | The virtual machine is being deallocated. | Not billed* |
+| Deallocated | The virtual machine is removed from the hypervisor but still available in the control plane. Virtual machines in the Deallocated state do not incur compute charges. | Not billed* |
+
+### Find the Power State
+To check the power state of a specific virtual machine, run the `az vm get-instance-view` command with the relevant resource group and VM name: 
+
+```
+az vm get-instance-view \
+--resource-group rg-VM-03 \
+--name myUbuntuVM02 \
+--query instanceView.statuses[1] --output table 
+```
+
+Example output:
+
+```
+Code                Level    DisplayStatus
+------------------  -------  ---------------
+PowerState/running  Info     VM running
+```
 
 ## Manage Virtual Machine 
 
