@@ -66,7 +66,44 @@ Replace <username> with your chosen **username**, and <public_ip_address> with t
 
 In the example command from step 3, we chose ***azureuser*** as our username. If you used that username, your command would look like the following: ```azureuser@<public_ip_address>```. 
 
+Once you have logged in to the virtual machine, you can install and configure software applications. When you are finished, you can close the SSH session by simply running the ```exit``` command. 
+
 ### Troubleshoot
+
+## Understand Virtual Machine Images
+The Azure Marketplace has a list of virtual machine images that you can use when creating your VM. Earlier, we created a virtual machine using the Ubuntu image. You can run the following command to list of popular VM images available to use in table format: 
+
+```az vm image list --output table```
+
+The command returns the following output: 
+
+```output
+Architecture    Offer                         Publisher               Sku                                 Urn                                                                             UrnAlias                 Version
+--------------  ----------------------------  ----------------------  ----------------------------------  ------------------------------------------------------------------------------  -----------------------  ---------
+x64             CentOS                        OpenLogic               8_5-gen2                            OpenLogic:CentOS:8_5-gen2:latest                                                CentOS85Gen2             latest
+x64             Debian11                      Debian                  11-backports-gen2                   Debian:debian-11:11-backports-gen2:latest                                       Debian-11                latest
+x64             flatcar-container-linux-free  kinvolk                 stable-gen2                         kinvolk:flatcar-container-linux-free:stable-gen2:latest                         FlatcarLinuxFreeGen2     latest
+x64             opensuse-leap-15-4            SUSE                    gen2                                SUSE:opensuse-leap-15-4:gen2:latest                                             OpenSuseLeap154Gen2      latest
+x64             RHEL                          RedHat                  8-lvm-gen2                          RedHat:RHEL:8-lvm-gen2:latest                                                   RHELRaw8LVMGen2          latest
+x64             sles-15-sp3                   SUSE                    gen2                                SUSE:sles-15-sp3:gen2:latest                                                    SLES                     latest
+x64             0001-com-ubuntu-server-jammy  Canonical               22_04-lts-gen2                      Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:latest                    Ubuntu2204               latest
+```
+
+To deploy a virtual machine using a specific image, you need to use the value under the ***Urn*** or ***Alias*** columns. When specifying the `--image`, you can replace the version number with 'latest' which selects the latest version of the distribution. 
+
+In the command example below, we are creating a windows virtual machine, and using the `--image` parameter to specify the latest version available. 
+
+```
+az vm create \
+--resource-group rg-VM2-01 \
+--name myWindowsVM \
+--image MicrosoftWindowsServer:WindowsServer:2022-Datacenter:latest \
+--admin-username azureuser \
+--generate-ssh-keys \
+ --public-ip-sku Standard \
+```
+## Understand Virtual Machine Sizes 
+
 
 ## Manage Virtual Machine 
 
