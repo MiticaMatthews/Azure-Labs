@@ -36,7 +36,7 @@ az vm create \
 --name myUbuntuVM01 \
 --image Ubuntu2204 \
 --admin-username azureuser \
---generate-ssh-keys\
+--generate-ssh-keys \
 --public-ip-sku Standard
 ```
 
@@ -47,8 +47,21 @@ az vm create \
 ```--generate-ssh-keys```: This takes care of secure access.
 ```--public-ip-sku Standard```: We are using the "Standard" verion for the public IP. 
 
-When your Ubuntu virtual machine has been successfully created, you should see something like this: 
+It may take a few minutes to create the virtual machine. Once the Ubuntu VM has been successfully created, you should see the Azure CLI output which contains information about the VM. Take note of the `publicIpAddress`, as you will use this to access the virtual machine: 
 
+```output
+{
+  "fqdns": "",
+  "id": "/subscriptions/f2c7d4w6-8m7b-0000-0000-000000000000/resourceGroups/rg-VM-01/providers/Microsoft.Compute/virtualMachines/myUbuntuVM01",
+  "location": "ukwest",
+  "macAddress": "00-3D-4A-88-6A-95",
+  "powerState": "VM running",
+  "privateIpAddress": "10.0.0.4",
+  "publicIpAddress": "51.141.81.189",
+  "resourceGroup": "rg-VM-01",
+  "zones": ""
+}
+```
 
 ### Test Ubuntu VM
 To check whether the newly created virtual machine is reachable, we must run the ```ping``` command. Think of it as testing the connection to your new virtual computer in the cloud. 
@@ -66,7 +79,54 @@ Replace <username> with your chosen **username**, and <public_ip_address> with t
 
 In the example command from step 3, we chose ***azureuser*** as our username. If you used that username, your command would look like the following: ```azureuser@<public_ip_address>```. 
 
+***Important:*** *The first time you attempt to log onto a Linux virtual machine, you may get a warning about adding the server fingerprint to a list of known hosts. In this case, I am okay with proceeding, so I select "yes".*
+<img width="861" alt="connect ssh" src="https://github.com/user-attachments/assets/2a15505c-6855-424e-8ac0-28f3692007cf">
+
 Once you have logged in to the virtual machine, you can install and configure software applications. When you are finished, you can close the SSH session by simply running the ```exit``` command. 
+
+### Install Nginx Web Server
+Ensure you are logged in and connected to your virtual machine via `ssh`, then run the following commands: 
+
+```
+sudo apt-get update
+sudo apt-get install nginx
+```
+
+Next: 
+1. Paste the VMs public IP address in a browser of your choice; and/or
+2. Run the following command: `curl -m 10 <public_ip_address>`
+
+  * Note: The `curl` command is making a basic GET request to retrieve data (the default web page) from the server at the specified public IP address.
+
+You should notice that this command **fails**. 
+
+<img width="757" alt="fail nginx access" src="https://github.com/user-attachments/assets/5c770628-b3b5-45d1-9653-cf87ad9afcf3">
+
+<img width="774" alt="fail access web server" src="https://github.com/user-attachments/assets/cf3f3c13-81af-4c58-a3d6-c1a8b5806bde">
+
+* This is because Azure Network Security Groups (NSGs) have default rules that block all incoming traffic. To allow HTTP traffic to your web server, you need to configure the NSG to open port 80.
+
+Exit the SSH session and run the following `az vm open-port` command: 
+
+```
+az vm open-port \
+--resource-group rg-VM-01 \
+--name myUbuntuVM01 \
+--port 80
+```
+
+* Note: Since Azure CLI is not installed or configured on your VM itself, you won't be able to run `az` commands there.
+
+And just like that, we can now view the default welcome page of our Nginx web server by: 
+
+1. Choosing a web browser of your choice typing the public IP address of the VM as the web address; and/or
+2. Running our curl command once again.
+
+<img width="849" alt="successful nginx access" src="https://github.com/user-attachments/assets/0ca44e8c-3353-436e-a839-6e4d5b926ce8">
+
+<img width="849" alt="successful web srver access" src="https://github.com/user-attachments/assets/dce4e619-526c-4acd-a730-be46a5f6e049">
+
+Congratulations! You have successfully created an Ubuntu 22.04 LTS, installed an Nginx web server, and updated NSG rules to open port 80, all via Azure CLI. 
 
 ### Troubleshoot
 
@@ -100,7 +160,7 @@ az vm create \
 --image MicrosoftWindowsServer:WindowsServer:2022-Datacenter:latest \
 --admin-username azureuser \
 --generate-ssh-keys \
---public-ip-sku Standard \
+--public-ip-sku Standard 
 ```
 ## Understand Virtual Machine Sizes 
 When you create an Azure virtual machine, its size determines how much compute power it gets, including CPY, GPU and memory. It is therefore essential to choose a size that aligns with your expected workload. If your needs change, you can resize the virtual machine later. 
@@ -154,7 +214,7 @@ az vm create \
 --image Ubuntu2204 \
 --size Standard_D2ds_v4 \
 --admin-username azureuser \
---generate-ssh-keys\
+--generate-ssh-keys \
 --public-ip-sku Standard
 ```
 
@@ -170,15 +230,15 @@ Next, before resizing our virtual machine, we need to view the list of available
 ```
 az vm list-vm-resize-options --resource-group rg-VM-03 --name myUbuntuVM02 --query [].name --output table
 ```
-The above command lists VM sizes for a specific VM *myUbuntuVM02* in the resource group *rg-VM-03* region. 
+* Note: The above command lists VM sizes for a specific VM `myUbuntuVM02` in the resource group `rg-VM-03` region. 
 
-To list the available sizes for *all* VMs in the resource group, run: 
+To list the available sizes for **all** VMs in the resource group, run: 
 
 ```
 az vm list-vm-resize-options --ids $(az vm list --resource-group rg-VM-03 --query "[].id" --output tsv)
 ```
 
-*Note: Remember to replace the resource group value with the name you chose for your resource group.*
+* Note: Remember to replace the resource group value with the name you chose for your resource group.
 
 If the desired size is available, you can resize the virtual machine while it's powered on, but it will reboot during the operation. Use the `az vm resize` command:
 
@@ -188,7 +248,7 @@ az vm resize --resource-group rg-VM-03 --name myUbuntuVM02 --size Standard_D3_v2
 
 If the desired size is not listed or available on the current Azure cluster, you will need to deallocate the virtual machine before resizing. This can be done by using the `az vm deallocate` command. 
 
-*Note: when you power the VM back on, any data on the temporary disk may be lost, and the IP address could change unless you assigned a static IP to the virtual machine.*
+* Note: when you power the VM back on, any data on the temporary disk may be lost, and the IP address could change unless you assigned a static IP to the virtual machine.
 
 To deallocate the virtual machine, run: 
 ```
@@ -227,7 +287,7 @@ To check the power state of a specific virtual machine, run the `az vm get-insta
 az vm get-instance-view \
 --resource-group rg-VM-03 \
 --name myUbuntuVM02 \
---query instanceView.statuses[1] --output table 
+--query 'instanceView.statuses[1]' --output table 
 ```
 
 Example output:
@@ -238,20 +298,55 @@ Code                Level    DisplayStatus
 PowerState/running  Info     VM running
 ```
 
-To get the power state of *all* VMs in a resource group, run: 
+To get the power state of **all** VMs in a resource group, run: 
 
 ```
-az vm get-instance-view --ids $(az vm list --resource-group rg-VM-03 --query "[].id" --output tsv)
+az vm get-instance-view --ids $(az vm list --resource-group rg-VM-03 --query "[].id" --output tsv) --query "[].{VMName:name, Code:instanceView.statuses[1].code, Level:instanceView.statuses[1].level, DisplayStatus:instanceView.statuses[1].displayStatus}" --output table
+```
+
+Example output: 
+
+```
+VMName        Code                Level    DisplayStatus
+------------  ------------------  -------  ---------------
+myUbuntuVM01  PowerState/running  Info     VM running
+myUbuntuVM02  PowerState/running  Info     VM running
+myUbuntuVM03  PowerState/running  Info     VM running
+```
+
+To get the power state of **all** VMs in subscription, run: 
+
+```
+az vm get-instance-view --ids $(az vm list --query "[].id" --output tsv) --query "[].{VMName:name, Code:instanceView.statuses[1].code, Level:instanceView.statuses[1].level, DisplayStatus:instanceView.statuses[1].displayStatus}" --output table
+```
+
+Example output: 
+
+```
+VMName        Code                    Level    DisplayStatus
+------------  ----------------------  -------  ---------------
+myUbuntuVM01  PowerState/deallocated  Info     VM deallocated
+myUbuntuVM02  PowerState/deallocated  Info     VM deallocated
+myUbuntuVM03  PowerState/deallocated  Info     VM deallocated
+myUbuntuVM04  PowerState/running      Info     VM running
 ```
 
 ## Manage Virtual Machine 
 Throughout the life cycle of a virtual machine, you may need to perform management tasks like starting, stopping or deleting the VM to improve performance and minimise costs. The Azure CLI simplifies VM management from the command line and allows you to automate these tasks with scripts. 
 
-## Get the IP Address
+### Get the IP Address
 The following command allows you to capture the public and private IP address of your VM. This can be useful if you forgot to capture the IP address earlier, or if the IP address has changed. 
 
 ```
 az vm list-ip-addresses --name myUbuntuVM01 --output table
+```
+
+Example output: 
+
+```output 
+VirtualMachine    PublicIPAddresses    PrivateIPAddresses
+----------------  -------------------  --------------------
+myUbuntuVM01      51.141.81.189        10.0.0.4
 ```
 ### Stop VM
 Stop a virtual machine using the following command: 
@@ -260,14 +355,19 @@ Stop a virtual machine using the following command:
 az vm stop --resource-group rg-VM-01 --name myUbuntuVM01
 ```
 
-Stop *all* VMs in a resource group: 
+Stop **all** VMs in a resource group: 
 
 ```
 az vm stop --ids $(az vm list --resource-group rg-VM-01 --query "[].id" --output tsv)
 ```
-*Remember to replace the values for resource group and VM name, with your chosen values.*
 
-*Also note: Remember you can verify the VM state and ensure it has in fact stopped by using the `az vm get-instance-view` command that we covered earlier.*
+Stop **all** VMs in subscription:
+
+```
+az vm stop --ids $(az vm list --query "[].id" -o tsv)
+```
+
+* Note: Remember you can verify the VM state and ensure it has in fact stopped by using the `az vm get-instance-view` command that we covered earlier.
 
 **Stop:** Pauses VM operation but continues billing for compute resources and storage (OS disk). Useful for temporary stops when you plan to restart the VM soon and intend to retain all VM data and configurations. 
 
@@ -277,13 +377,17 @@ Start a specific stopped virtual machine in a select resource group with the fol
 az vm start --resource-group rg-VM-01 --name myUbuntuVM01 
 ```
 
-Start *all* VMs in a resource group: 
+Start **all** VMs in a resource group: 
 
 ```
 az vm start --ids $(az vm list --resource-group rg-VM-01 --query "[].id" --output tsv)
 ```
 
-*Remember to replace the values for resource group and VM name, with your chosen values.*
+Start **all** VMs in subscription:
+
+```
+az vm start --ids $(az vm list --query "[].id" -o tsv)
+```
 
 ### Restart VM
 Restarting your virtual machine is just as simple. Run the following command: 
@@ -292,13 +396,17 @@ Restarting your virtual machine is just as simple. Run the following command:
 az vm restart --resource-group rg-VM-01 --name myUbuntuVM01
 ```
 
-Retart *all* VMs in a resource group: 
+Retart **all** VMs in a resource group: 
 
 ```
 az vm restart --ids $(az vm list --resource-group rg-VM-01 --query "[].id" --output tsv)
 ```
 
-*Remember to replace the values for resource group and VM name, with your chosen values.*
+Restart **all** WMs in subscription:
+
+```
+az vm restart --ids $(az vm list --query "[].id" -o tsv)
+```
 
 ### Auto-Shutdown VM
 Schedule your virtual machine to automatically shutdown at a specific time to minimise costs: 
@@ -306,7 +414,18 @@ Schedule your virtual machine to automatically shutdown at a specific time to mi
 ```
 az vm auto-shutdown --resource-group rg-VM-01 --name myUbuntuVM01 --time 1930
 ```
-*Remember to replace the values for resource group and VM name, with your chosen values.*
+
+Auto-shutdown **all** VMs in a resource group: 
+
+```
+az vm auto-shutdown --ids $(az vm list --resource-group rg-VM-01 --query "[].id" -o tsv) --time 1930 --output table
+```
+
+Auto-shutdown **all** VMs in subscription: 
+
+```
+az vm auto-shutdown --ids $(az vm list --query "[].id" -o tsv) --time 1930 --output table
+```
 
 **Auto-Shutdown:** Schedules shutdown to stop VM operation at specified times. Still billed for compute resources until shutdown. You continue to pay for storage (OS and data disks attached to the VM). Great for ensuring VMs are not left running unnecessarily and automatiing shutdowns to reduce compute costs without manual intervention. 
 
@@ -317,7 +436,17 @@ Deallocate (stop) your virtual machine and pause billing for compute resources:
 az vm deallocate --resource-group rg-VM-01 --name myUbuntuVM01
 ```
 
-*Remember to replace the values for resource group and VM name, with your chosen values.*
+Deallocate **all** VMs in a resource group: 
+
+```
+az vm deallocate --ids $(az vm list --resource-group rg-VM-01 --query "[].id" --output tsv)
+```
+
+Deallocate **all** VMs in subscription:
+
+```
+az vm deallocate --ids $(az vm list --query "[].id" -o tsv)
+```
 
 **Deallocate:** Stops VM completely. Halts billing for compute resources but still charged for storage (OS and data disks attached to the VM). Suitable for more long-term cost management strategies where VMs may be inactive for extended periods, essentially pausing compute costs until needed again. 
 
@@ -330,7 +459,17 @@ az vm delete --resource-group rg-VM-01 --name myUbuntuVM01 --yes --no-wait
 * `--yes`: Confirms your intention to delete without prompting you again for confirmation.
 * `--no-wait`: Returns terminal control immediately without having to wait for completion, once the operation is initiated.
 
-*Remember to replace the values for resource group and VM name, with your chosen values.*
+Delete **all** VMs in a resource group: 
+
+```
+az vm delete --ids $(az vm list --resource-group rg-VM-01 --query "[].id" --output tsv)
+```
+
+Delete **all** VMs in subscription: 
+
+```
+az vm delete --ids $(az vm list --query "[].id" --output tsv)
+```
 
 ## Delete Resources
 
