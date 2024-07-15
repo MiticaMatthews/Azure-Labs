@@ -473,7 +473,16 @@ az vm delete --ids $(az vm list --query "[].id" --output tsv)
 ```
 
 ## Delete Resources
+It's worth noting that using the `az vm delete` command will only delete the virtual machine itself and not its associated network and disk resources.
 
+When the virtual machine is no longer needed, you can delete the resource group, virtual machine, and all related resources to avoid unnecessary costs. To do this, run:
 
+```
+az group delete --name rg-VM-01 --yes --no-wait
+```
 
+Finally, you can verify the status of the resource group deletion by running: 
 
+```
+az group list --output table
+```
