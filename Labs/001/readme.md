@@ -72,7 +72,7 @@ Create an **SSH connection** with the virtual machine.
 
 ## Delete Resources
 
-When the virtual machine is no longer needed, you can delete the resource group, virtual machine and all related resources to avoid unecessary costs. To do this, you need to: 
+When the virtual machine is no longer needed, you can delete the resource group, virtual machine and all related resources to avoid unnecessary costs. To do this, you need to: 
 
 1. Select the **Resource group** link on the Overview page for the virtual machine.
 2. Select **Delete resource group** at the top of the page for the resource group.
