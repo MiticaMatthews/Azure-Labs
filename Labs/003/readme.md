@@ -80,6 +80,7 @@ Replace <username> with your chosen **username**, and <public_ip_address> with t
 In the example command from step 3, we chose ***azureuser*** as our username. If you used that username, your command would look like the following: ```azureuser@<public_ip_address>```. 
 
 ***Important:*** *The first time you attempt to log onto a Linux virtual machine, you may get a warning about adding the server fingerprint to a list of known hosts. In this case, I am okay with proceeding, so I select "yes".*
+
 <img width="861" alt="connect ssh" src="https://github.com/user-attachments/assets/2a15505c-6855-424e-8ac0-28f3692007cf">
 
 Once you have logged in to the virtual machine, you can install and configure software applications. When you are finished, you can close the SSH session by simply running the ```exit``` command. 
