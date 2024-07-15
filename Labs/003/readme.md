@@ -245,16 +245,92 @@ az vm get-instance-view --ids $(az vm list --resource-group rg-VM-03 --query "[]
 ```
 
 ## Manage Virtual Machine 
+Throughout the life cycle of a virtual machine, you may need to perform management tasks like starting, stopping or deleting the VM to improve performance and minimise costs. The Azure CLI simplifies VM management from the command line and allows you to automate these tasks with scripts. 
+
+## Get the IP Address
+The following command allows you to capture the public and private IP address of your VM. This can be useful if you forgot to capture the IP address earlier, or if the IP address has changed. 
+
+```
+az vm list-ip-addresses --name myUbuntuVM01 --output table
+```
+### Stop VM
+Stop a virtual machine using the following command: 
+
+```
+az vm stop --resource-group rg-VM-01 --name myUbuntuVM01
+```
+
+Stop *all* VMs in a resource group: 
+
+```
+az vm stop --ids $(az vm list --resource-group rg-VM-01 --query "[].id" --output tsv)
+```
+*Remember to replace the values for resource group and VM name, with your chosen values.*
+
+*Also note: Remember you can verify the VM state and ensure it has in fact stopped by using the `az vm get-instance-view` command that we covered earlier.*
+
+**Stop:** Pauses VM operation but continues billing for compute resources and storage (OS disk). Useful for temporary stops when you plan to restart the VM soon and intend to retain all VM data and configurations. 
 
 ### Start VM
+Start a specific stopped virtual machine in a select resource group with the following command: 
+```
+az vm start --resource-group rg-VM-01 --name myUbuntuVM01 
+```
 
-### Stop VM
+Start *all* VMs in a resource group: 
+
+```
+az vm start --ids $(az vm list --resource-group rg-VM-01 --query "[].id" --output tsv)
+```
+
+*Remember to replace the values for resource group and VM name, with your chosen values.*
 
 ### Restart VM
+Restarting your virtual machine is just as simple. Run the following command: 
+
+```
+az vm restart --resource-group rg-VM-01 --name myUbuntuVM01
+```
+
+Retart *all* VMs in a resource group: 
+
+```
+az vm restart --ids $(az vm list --resource-group rg-VM-01 --query "[].id" --output tsv)
+```
+
+*Remember to replace the values for resource group and VM name, with your chosen values.*
 
 ### Auto-Shutdown VM
+Schedule your virtual machine to automatically shutdown at a specific time to minimise costs: 
+
+```
+az vm auto-shutdown --resource-group rg-VM-01 --name myUbuntuVM01 --time 1930
+```
+*Remember to replace the values for resource group and VM name, with your chosen values.*
+
+**Auto-Shutdown:** Schedules shutdown to stop VM operation at specified times. Still billed for compute resources until shutdown. You continue to pay for storage (OS and data disks attached to the VM). Great for ensuring VMs are not left running unnecessarily and automatiing shutdowns to reduce compute costs without manual intervention. 
+
+### Deallocate VM 
+Deallocate (stop) your virtual machine and pause billing for compute resources:
+
+```
+az vm deallocate --resource-group rg-VM-01 --name myUbuntuVM01
+```
+
+*Remember to replace the values for resource group and VM name, with your chosen values.*
+
+**Deallocate:** Stops VM completely. Halts billing for compute resources but still charged for storage (OS and data disks attached to the VM). Suitable for more long-term cost management strategies where VMs may be inactive for extended periods, essentially pausing compute costs until needed again. 
 
 ### Delete VM
+Delete your virtual machine using the following command: 
+
+```
+az vm delete --resource-group rg-VM-01 --name myUbuntuVM01 --yes --no-wait
+```
+* `--yes`: Confirms your intention to delete without prompting you again for confirmation.
+* `--no-wait`: Returns terminal control immediately without having to wait for completion, once the operation is initiated.
+
+*Remember to replace the values for resource group and VM name, with your chosen values.*
 
 ## Delete Resources
 
