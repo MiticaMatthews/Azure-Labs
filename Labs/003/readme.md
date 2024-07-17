@@ -41,13 +41,18 @@ az vm create \
 ```
 
 ```rg-VM-01```: This is the resource group we created in the previous step. 
+
 ```myUbuntuVM01```: Give your virtual machine a name that makes sense to you. 
+
 ```Ubuntu2204```: We have opted for Canonical Ubuntu 22.04 LTS, which is the latest (Long Term Support) version release. 
+
 ```azureuser```: This is your username. Make it something memorable. 
+
 ```--generate-ssh-keys```: This takes care of secure access.
+
 ```--public-ip-sku Standard```: We are using the "Standard" verion for the public IP. 
 
-It may take a few minutes to create the virtual machine. Once the Ubuntu VM has been successfully created, you should see the Azure CLI output which contains information about the VM. Take note of the `publicIpAddress`, as you will use this to access the virtual machine: 
+It may take a few minutes to create the virtual machine. Once the Ubuntu VM has been successfully created, you should see the following Azure CLI output which contains information about the VM. Take note of the `publicIpAddress`, as you will use this to access the virtual machine: 
 
 ```output
 {
@@ -67,9 +72,9 @@ It may take a few minutes to create the virtual machine. Once the Ubuntu VM has 
 To check whether the newly created virtual machine is reachable, we must run the ```ping``` command. Think of it as testing the connection to your new virtual computer in the cloud. 
 
 4. Run the following command to test your VM:
-```ping <public_ip_address>```
+```ping public_ip_address```
 
-Remember to replace <public_ip_address> with the **public IP address** of your virtual machine. If you see responses, it means you are connected. Once you have confirmed that your virtual machine is reachable, you can press ctrl+C to exit. 
+Remember to replace <public_ip_address> with the **public IP address** of your virtual machine. If you see responses, it means you are connected. Once you have confirmed that your virtual machine is reachable, you can press `ctrl`+`c` to exit. 
 
 ## Connect to Virtual Machine
 5. Next, open a SSH connection to the created virtual machine with the following syntax:
@@ -136,6 +141,19 @@ When deploying virtual machines in Azure, you may encounter a couple of common i
 Sometimes, when connecting to a computer using SSH, you may see an error that looks something like this: 
 
 ```output
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@     WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+It is also possible that the RSA host key has just been changed.
+The fingerprint for the RSA key sent by the remote host is
+5d:0b:85:12:c7:ab:02:10:4a:ab:4g:f1:94:ab:e5:3c.
+Please contact your system administrator.
+Add correct host key in /home/user/.ssh/known_hosts to get rid of this message.
+Offending key in /home/user/.ssh/known_hosts:2
+RSA host key for <domain> has changed and you have requested strict checking.
+Host key verification failed.
 ```
 
 This error occurs when the public key of the host changes. Whenever you connect to a computer using SSH, the key you used to connect is stored in a file called `known_hosts`, located in your `.ssh` home directory. You can open the file with the text editor of your choice. I'm going to be using `vim`. 
@@ -146,7 +164,7 @@ vim ~/.ssh/known_hosts
 
 Let's walk through your options to resolve this issue: 
 
-1. **Option 1: Remove the entire 'known_hosts' file**
+1. **Option 1: Remove the 'Known_Hosts' File**
 
 If the known_hosts file only contains one host, then deleting the file may be a solution. Note: A new **known_hosts** file will be created the next time you SSH into a computer. Before removing the file, you should back up the contents:
 
@@ -155,7 +173,7 @@ cp ~/.ssh/known_hosts ~/.ssh/known_hosts.old
 rm ~/.ssh/known_hosts
 ```
 
-2. **Option 2: Remove the offending host key individually**
+2. **Option 2: Remove the Offending Host Key Individually**
 
 Look at the original error message. You may notice the following line:
 
@@ -174,17 +192,16 @@ cp ~/.ssh/known_hosts ~/.ssh/known_hosts.old
 ```
 
 ### Error 2: 'Passphrase' Prompt for SSH Keys 
-If you are prompted for a passphrased when creating your virtual machine and you did not set one, it may be because an existing SSH key is being reused. 
+If you are prompted for a passphrase when creating your virtual machine and you did not set one, it may be because an existing SSH key is being reused. 
 
-The `--generated-ssh-keys` parameter will use existing keys if the `id_rsa` and `id_rsa.pub` files already exist in your `.ssh` home directory, and will not create new ones. 
+The `--generated-ssh-keys` parameter will use existing keys if the `id_rsa` and `id_rsa.pub` files already exist in your `.ssh` home directory, and will not create new ones. Let's walk through your options to resolve this issue:
 
-Let's walk through your options to resolve this issue: 
-
-1. **Option 1: Remove the existing SSH key pair**
-If the computers that used the existing SSH key pair no longer exist, removing the existing key pair files and creating a new machine using the `--generate-ssh-keys` option may be a solution. You should back up the file contents before removing the key files:
+1. **Option 1: Remove the Existing SSH Key Pair**
+   
+If the computer/s that used the existing SSH key pair no longer exist, removing the existing key pair files and creating a new machine using the `--generate-ssh-keys` option may be a solution. You should back up the file contents before removing the key files:
 
 ```
-cp ~/.ssh/id_rsa ~/.ssh_rsa_old
+cp ~/.ssh/id_rsa ~/.ssh/id_rsa_old
 cp ~/.ssh/id_rsa.pub ~/.ssh/id_rsa_old.pub
 rm ~/.ssh/id_rsa ~/.ssh/id_rsa.pub
 ```
@@ -201,7 +218,8 @@ az vm create \
 --public-ip-sku Standard
 ```
 
-2. **Option 2: Create new SSH pair with a different filename**
+2. **Option 2: Create New SSH Pair With a Different Filename**
+
 You can generate a new key pair with a different filename to avoid conflicts with existing keys using the `ssh-keygen` command. To generate the new key pair, run:
 
 ```
@@ -209,7 +227,9 @@ ssh-keygen -t rsa -b 2048 -f ~/.ssh/new_id_rsa
 ```
 
 ```-t rsa```: Specifies the type of key to create with the value being "rsa". 
+
 ```-b 2048```: Specifies the number of bits in the key to create, using the default of 2048.
+
 ```-f ~/.ssh/new_id_rsa```: Specifies the filename "new_id_rsa" of the key file we are creating. 
 
 * Note: Do not enter a passphrase when prompted.
@@ -226,7 +246,8 @@ az vm create \
 --public-ip-sku Standard
 ```
 
-3. **Option 3: Reset the SSH key**
+3. **Option 3: Reset the SSH Key**
+
 If you are unable to access the virtual machine due to forgetting a passphrase, you can reset the SSH key using the `az vm user update` command. Here's how you do it:
 
 First, generate a new SSH key pair by running:
@@ -252,7 +273,7 @@ az vm user update \
 Next, use your newly created key to SSH into your VM: 
 
 ```
-ssh -i ~/.ssh/new_id_rsa azureuser@<public_ip_address>
+ssh -i ~/.ssh/new_id_rsa azureuser@public_ip_address
 ```
 
 Once connected to your virtual machine, open the `~/.ssh/authorized_keys` file on the VM using a text editor of your choice and remove the old key with the passphrase: 
@@ -272,7 +293,8 @@ mv ~/.ssh/new_id_rsa ~/.ssh/id_rsa
 mv ~/.ssh/new_id_rsa.pub ~/.ssh/id_rsa.pub
 ```
 
-4. **Option 4: Replace SSH key pair**
+4. **Option 4: Replace SSH Key Pair**
+
 If you have existing machines using an old key pair with a compromised passphrase, you can replace the key pair with a new one. 
 
 First, generate a new key by running: 
@@ -307,10 +329,10 @@ Copy the entire line of the `~/.ssh/new_id_rsa.pub` file to the `authorized_keys
 Test whether you can access your machine with your new key without closing your existing connection so that you are still connected in case something goes wrong. Run the following on your local machine: 
 
 ```
-ssh -i ~/.ssh/new_id_rsa.pub azureuser@<public_ip_address>
+ssh -i ~/.ssh/new_id_rsa.pub azureuser@public_ip_address
 ```
 
-* Note: Remember to replace the values of username and your VMs public IP address.
+* Note: Remember to replace the values of the username and VM public IP address variables.
 
 If you are able to connect to your VM using your new keys, this means you have successfully replaced your SSH key on that machine. Now, repeat the process for the next machine, and so on. 
 
