@@ -354,7 +354,7 @@ ssh -i ~/.ssh/id_rsa_old
 * Note: Don't forget to replace the old key in that machine with your new key. 
 
 ## Understand Virtual Machine Images
-The Azure Marketplace has a list of virtual machine images that you can use when creating your VM. Earlier, we created a virtual machine using the Ubuntu image. You can run the following command to list of popular VM images available to use in table format: 
+The Azure Marketplace has a list of virtual machine images that you can use when creating your VM. Earlier, we created a virtual machine using the Ubuntu image. You can run the following command to list popular VM images available to use in table format: 
 
 ```az vm image list --output table```
 
@@ -442,13 +442,13 @@ az vm create \
 ```
 
 ### Resize a Virtual Machine
-Once your virtual machine has been deployed, you may want to resize it to adjust resource allocation. To view the current size of a VM, run the `az vm show` command: 
+Once your virtual machine has been deployed, you may want to resize it to adjust its resource allocation. To view the current size of a VM, run the `az vm show` command: 
 
 ```
 az vm show --resource-group rg-VM-03 --name myUbuntuVM02 --query hardwareProfile.vmSize
 ```
 
-Next, before resizing our virtual machine, we need to view the list of available VM sizes on the hardware cluster where the VM is hosted
+Next, before resizing the virtual machine, we need to view the list of available VM sizes on the hardware cluster where the VM is hosted
 
 ```
 az vm list-vm-resize-options --resource-group rg-VM-03 --name myUbuntuVM02 --query [].name --output table
@@ -650,7 +650,7 @@ Auto-shutdown **all** VMs in subscription:
 az vm auto-shutdown --ids $(az vm list --query "[].id" -o tsv) --time 1930 --output table
 ```
 
-**Auto-Shutdown:** Schedules shutdown to stop VM operation at specified times. Still billed for compute resources until shutdown. You continue to pay for storage (OS and data disks attached to the VM). Great for ensuring VMs are not left running unnecessarily and automatiing shutdowns to reduce compute costs without manual intervention. 
+**Auto-Shutdown:** Schedules shutdown to stop VM operation at specified times. Still billed for compute resources until shutdown. You continue to pay for storage (OS and data disks attached to the VM). Great for ensuring VMs are not left running unnecessarily and automating shutdowns to reduce compute costs without manual intervention. 
 
 ### Deallocate VM 
 Deallocate (stop) your virtual machine and pause billing for compute resources:
@@ -671,7 +671,7 @@ Deallocate **all** VMs in subscription:
 az vm deallocate --ids $(az vm list --query "[].id" -o tsv)
 ```
 
-**Deallocate:** Stops VM completely. Halts billing for compute resources but still charged for storage (OS and data disks attached to the VM). Suitable for more long-term cost management strategies where VMs may be inactive for extended periods, essentially pausing compute costs until needed again. 
+**Deallocate:** Stops VM completely. Halts billing for compute resources but is still charged for storage (OS and data disks attached to the VM). Suitable for more long-term cost management strategies where VMs may be inactive for extended periods, essentially pausing compute costs until needed again. 
 
 ### Delete VM
 Delete your virtual machine using the following command: 
