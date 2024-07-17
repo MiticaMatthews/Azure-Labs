@@ -23,7 +23,7 @@ Before we can proceed with creating our Azure Virutal Machine, we must create a 
 
 ``` az group create --name rg-VM-01 --location ukwest```
 
-***Note:*** *The above example creates a resource group named rg-VM-01 in the (Europe) UK West location. You can replace the variable values to a resource group name that you will easily remember, and an Azure datacenter location that is close to you.* 
+* ***Note:*** *The above example creates a resource group named rg-VM-01 in the (Europe) UK West location. You can replace the variable values to a resource group name that you will easily remember, and an Azure datacenter location that is close to you.* 
 
 ### Create Ubuntu VM
 Next, let's create an Ubuntu virtual machine. I will break down each part of the command to aid your understanding. 
@@ -79,7 +79,7 @@ Replace <username> with your chosen **username**, and <public_ip_address> with t
 
 In the example command from step 3, we chose ***azureuser*** as our username. If you used that username, your command would look like the following: ```azureuser@<public_ip_address>```. 
 
-***Important:*** *The first time you attempt to log onto a Linux virtual machine, you may get a warning about adding the server fingerprint to a list of known hosts. In this case, I am okay with proceeding, so I select "yes".*
+* ***Important:*** *The first time you attempt to log onto a Linux virtual machine, you may get a warning about adding the server fingerprint to a list of known hosts. In this case, I am okay with proceeding, so I select "yes".*
 
 <img width="861" alt="connect ssh" src="https://github.com/user-attachments/assets/2a15505c-6855-424e-8ac0-28f3692007cf">
 
@@ -129,7 +129,207 @@ And just like that, we can now view the default welcome page of our Nginx web se
 
 Congratulations! You have successfully created an Ubuntu 22.04 LTS, installed an Nginx web server, and updated NSG rules to open port 80, all via Azure CLI. 
 
-### Troubleshoot
+## Troubleshoot
+When deploying virtual machines in Azure, you may encounter a couple of common issues. Below, I'll guide you through the process of dealing with them. 
+
+### Error 1: 'Remote Host Identification Has Changed'
+Sometimes, when connecting to a computer using SSH, you may see an error that looks something like this: 
+
+```output
+```
+
+This error occurs when the public key of the host changes. Whenever you connect to a computer using SSH, the key you used to connect is stored in a file called `known_hosts`, located in your `.ssh` home directory. You can open the file with the text editor of your choice. I'm going to be using `vim`. 
+
+```
+vim ~/.ssh/known_hosts
+```
+
+Let's walk through your options to resolve this issue: 
+
+1. **Option 1: Remove the entire 'known_hosts' file**
+
+If the known_hosts file only contains one host, then deleting the file may be a solution. Note: A new **known_hosts** file will be created the next time you SSH into a computer. Before removing the file, you should back up the contents:
+
+```
+cp ~/.ssh/known_hosts ~/.ssh/known_hosts.old
+rm ~/.ssh/known_hosts
+```
+
+2. **Option 2: Remove the offending host key individually**
+
+Look at the original error message. You may notice the following line:
+
+`RSA host key for <domain_name> has changed...`
+
+This points out the offending host, so you can now remove that key by running: 
+
+```
+ssh-keygen -R hostname
+```
+
+Alternatively, you can edit the known_hosts file directly using a text editor of your choice (e.g. nano or vim), and remove the offending line which is indicated in the original error message: **Offending key in /home/user/.ssh/known_hosts:2.** In this example, the offending key is on line 2. Make sure that you back up the file before deleting anything in case you accidentally delete something you did not intend to, by running: 
+
+```
+cp ~/.ssh/known_hosts ~/.ssh/known_hosts.old
+```
+
+### Error 2: 'Passphrase' Prompt for SSH Keys 
+If you are prompted for a passphrased when creating your virtual machine and you did not set one, it may be because an existing SSH key is being reused. 
+
+The `--generated-ssh-keys` parameter will use existing keys if the `id_rsa` and `id_rsa.pub` files already exist in your `.ssh` home directory, and will not create new ones. 
+
+Let's walk through your options to resolve this issue: 
+
+1. **Option 1: Remove the existing SSH key pair**
+If the computers that used the existing SSH key pair no longer exist, removing the existing key pair files and creating a new machine using the `--generate-ssh-keys` option may be a solution. You should back up the file contents before removing the key files:
+
+```
+cp ~/.ssh/id_rsa ~/.ssh_rsa_old
+cp ~/.ssh/id_rsa.pub ~/.ssh/id_rsa_old.pub
+rm ~/.ssh/id_rsa ~/.ssh/id_rsa.pub
+```
+
+The, create your virtual machine using the `--generate-ssh-keys` option: 
+
+```
+az vm create \
+--resource-group rg-VM-01 \
+--name myUbuntuVM01 \
+--image Ubuntu2204 \
+--admin-username azureuser \
+--generate-ssh-keys \
+--public-ip-sku Standard
+```
+
+2. **Option 2: Create new SSH pair with a different filename**
+You can generate a new key pair with a different filename to avoid conflicts with existing keys using the `ssh-keygen` command. To generate the new key pair, run:
+
+```
+ssh-keygen -t rsa -b 2048 -f ~/.ssh/new_id_rsa
+```
+
+```-t rsa```: Specifies the type of key to create with the value being "rsa". 
+```-b 2048```: Specifies the number of bits in the key to create, using the default of 2048.
+```-f ~/.ssh/new_id_rsa```: Specifies the filename "new_id_rsa" of the key file we are creating. 
+
+* Note: Do not enter a passphrase when prompted.
+
+Next, use the newly created public key to create your virtual machine, using the `--ssh-key-value` option: 
+
+```
+az vm create \
+--resource-group rg-VM-01 \
+--name myUbuntuVM01 \
+--image Ubuntu2204 \
+--admin-username azureuser \
+--ssh-key-value ~/.ssh/new_id_rsa.pub \
+--public-ip-sku Standard
+```
+
+3. **Option 3: Reset the SSH key**
+If you are unable to access the virtual machine due to forgetting a passphrase, you can reset the SSH key using the `az vm user update` command. Here's how you do it:
+
+First, generate a new SSH key pair by running:
+
+```
+ssh-keygen -t rsa -b 2048 -f ~/.ssh/new_id_rsa
+```
+
+This will create a new SSH key in ~/.ssh/new_id_rsa
+
+Then run the following command to reset the SSH key for your virtual machine:
+
+```
+az vm user update \
+  --resource-group rg-VM-01 \
+  --name myUbuntuVM01 \
+  --username azureuser \
+  --ssh-key-value ~/.ssh/new_id_rsa.pub
+```
+
+* Note: The `az vm user update` command will add the new public key to the `~/.ssh/authorized_keys` file for the specified user on the virtual machine, without removing any existing keys. As such, you should access your VM and remove the old public key for security and to ensure that *only* the new key is used for future connections.
+
+Next, use your newly created key to SSH into your VM: 
+
+```
+ssh -i ~/.ssh/new_id_rsa azureuser@<public_ip_address>
+```
+
+Once connected to your virtual machine, open the `~/.ssh/authorized_keys` file on the VM using a text editor of your choice and remove the old key with the passphrase: 
+
+```
+vim ~/.ssh/authorized_keys
+```
+
+Note: Remember to save and exit the ~/.ssh/authorized_keys file you edited. 
+
+Finally, back up and replace the old key files on your local machine. You can then rename your newly created key to ~/.ssh/id_rsa to ensure `ssh` finds it automatically. You can do this easily by running:
+
+```
+mv ~/.ssh/id_rsa ~/.ssh/id_rsa_old
+mv ~/.ssh/id_rsa.pub ~/.ssh/id_rsa_old.pub
+mv ~/.ssh/new_id_rsa ~/.ssh/id_rsa
+mv ~/.ssh/new_id_rsa.pub ~/.ssh/id_rsa.pub
+```
+
+4. **Option 4: Replace SSH key pair**
+If you have existing machines using an old key pair with a compromised passphrase, you can replace the key pair with a new one. 
+
+First, generate a new key by running: 
+
+```
+ssh-keygen -t rsa -b 2048 -f ~/.ssh/new_id_rsa
+```
+
+This will create a new SSH key in ~/.ssh/new_id_rsa
+
+Next, make a list of all machines that are accessible using the old / existing SSH key that we want to replace. Then, connect to each of those machines and remove the old key from all machines that have it using a text editor of your choice: 
+
+```
+ssh azureuser@public_ip_address
+vim .ssh/authorized_keys
+```
+
+Editing the `~/.ssh/authorized_keys` file in your machine/s:
+
+1. Ensure you remove the line containing your old SSH key. This will be simple if the file only contains one line. However, if it contains multiple lines, then look for the line that ends with the same cryptic letters as your old public key. You can view the old public key by running the following on your local machine:
+
+```cat ~/.id_rsa.pub```: Assuming that your old private key is in 'id_rsa'. 
+   
+2. Add the new public key to the `authorized_keys` file. You can find and view the contents of your new public key file on your local machine by running:
+
+```
+cat ~/.ssh/new_id_rsa.pub
+```
+
+Copy the entire line of the `~/.ssh/new_id_rsa.pub` file to the `authorized_keys` file. Then save and exit the file by pressing `esc`+`:wq`,`Enter`. 
+
+Test whether you can access your machine with your new key without closing your existing connection so that you are still connected in case something goes wrong. Run the following on your local machine: 
+
+```
+ssh -i ~/.ssh/new_id_rsa.pub azureuser@<public_ip_address>
+```
+
+* Note: Remember to replace the values of username and your VMs public IP address.
+
+If you are able to connect to your VM using your new keys, this means you have successfully replaced your SSH key on that machine. Now, repeat the process for the next machine, and so on. 
+
+Once you have successfully replaced your old key, you can now rename your newly created key to ~/.ssh/id_rsa to ensure `ssh` finds it automatically. Make sure you back up your old keys in case you forgot about a system that still requires the old key for access. To do so, simply run:  
+
+```
+mv ~/.ssh/id_rsa ~/.ssh/id_rsa_old
+mv ~/.ssh/id_rsa.pub ~/.ssh/id_rsa_old.pub
+mv ~/.ssh/new_id_rsa ~/.ssh/id_rsa
+mv ~/.ssh/new_id_rsa.pub ~/.ssh/id_rsa.pub
+```
+
+In the event you have forgotten a machine that is still using the old key, simply run the following to use it: 
+
+```
+ssh -i ~/.ssh/id_rsa_old
+```
+
+* Note: Don't forget to replace the old key in that machine with your new key. 
 
 ## Understand Virtual Machine Images
 The Azure Marketplace has a list of virtual machine images that you can use when creating your VM. Earlier, we created a virtual machine using the Ubuntu image. You can run the following command to list of popular VM images available to use in table format: 
