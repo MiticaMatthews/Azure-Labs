@@ -282,6 +282,12 @@ Once connected to your virtual machine, open the `~/.ssh/authorized_keys` file o
 vim ~/.ssh/authorized_keys
 ```
 
+You can cross-reference old public key by running the following on your local machine:
+
+```
+cat ~/.ssh/id_rsa.pub
+```
+
 Note: Remember to save and exit the ~/.ssh/authorized_keys file you edited. 
 
 Finally, back up and replace the old key files on your local machine. You can then rename your newly created key to ~/.ssh/id_rsa to ensure `ssh` finds it automatically. You can do this easily by running:
@@ -316,7 +322,7 @@ Editing the `~/.ssh/authorized_keys` file in your machine/s:
 
 1. Ensure you remove the line containing your old SSH key. This will be simple if the file only contains one line. However, if it contains multiple lines, then look for the line that ends with the same cryptic letters as your old public key. You can view the old public key by running the following on your local machine:
 
-```cat ~/.id_rsa.pub```: Assuming that your old private key is in 'id_rsa'. 
+```cat ~/.ssh/id_rsa.pub```: Assuming that your old private key is in 'id_rsa'. 
    
 2. Add the new public key to the `authorized_keys` file. You can find and view the contents of your new public key file on your local machine by running:
 
