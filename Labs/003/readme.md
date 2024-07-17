@@ -258,6 +258,8 @@ ssh-keygen -t rsa -b 2048 -f ~/.ssh/new_id_rsa
 
 This will create a new SSH key in ~/.ssh/new_id_rsa
 
+* Note: Do not enter a passphrase when prompted.
+
 Then run the following command to reset the SSH key for your virtual machine:
 
 ```
@@ -310,6 +312,8 @@ ssh-keygen -t rsa -b 2048 -f ~/.ssh/new_id_rsa
 ```
 
 This will create a new SSH key in ~/.ssh/new_id_rsa
+
+* Note: Do not enter a passphrase when prompted.
 
 Next, make a list of all machines that are accessible using the old / existing SSH key that we want to replace. Then, connect to each of those machines and remove the old key from all machines that have it using a text editor of your choice: 
 
