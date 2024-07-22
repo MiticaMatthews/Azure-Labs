@@ -1,7 +1,24 @@
 ![Deploy](https://github.com/user-attachments/assets/7d1216c8-1fd3-4b8f-bc38-6de91a14e5cd)
 
-## What is Azure Virtual Network? 
+In this write-up, I'm going to walk you through the process of creating an Azure Virtual Network using Bastion, via the Azure Portal. We will associate the virtual network with two virtual machines, use Bastion to securely connect to the VMs from the internet using Secure Shell (SSH), and enable private communication between the VMs. 
 
+But first, let's take a quick look at what an Azure Virtual Network is. 
+
+<img width="876" alt="VN-resources" src="https://github.com/user-attachments/assets/e1142b3a-565b-494d-95da-6b5dc602f934">
+
+
+## What is Azure Virtual Network? 
+Azure Virtual Networks are the backbone of private networking in Azure, enabling secure and seamless communication between Azure resources like virtual machines, web apps and databases, and with external resources and on-premises systems. Unlike traditional wired networks, Azure Virtual Networks connect devices, servers and data centers through software and wireless technology, offering the ability to: 
+
+1. **Isolation and segmentation:** Create isolated virtual networks with private IP address spaces that are not internet routable.
+2. **Internet communications:** Enable public internet access to Azure resources by assigning public IP addresses to resources or using public load balancers.
+3. **Communicate between Azure resources:** Securely connect Azure resources like Azure Virtual Machine Scale Sets, Azure Kubernetes Service (AKS), App Service Environments, Azure SQL databases, and storage accounts using virtual networks and service endpoints for optimal security and routing.
+4. **Communicate with on-premises resources:** Link on-premises networks to Azure using VPNs or ExpressRoute for secure, high-bandwidth connections
+5. **Route network traffic:** Control traffic flow between subnets and networks with custom route tables and Border Gateway Protocol (BGP)
+6. **Filter network traffic:** Use Network Security Groups (NSGs) and Network Virtual Appliances, such as firewalls and wide area network (WAN) optimisers, to define security rules and optimise network functions.
+7. **Connect virtual networks:** Link virtual networks using peering, enabling private communication and creating a global interconnected network.
+
+Essentially, an Azure Virtual Network extends on-premises networks to the cloud, providing a secure and scalable environment for your cloud resources. 
 
 ## Requirements 
 **Azure Account:** If you don't already have an Azure subscription, create a free account using the following link: https://azure.microsoft.com/en-gb/free/
