@@ -144,7 +144,7 @@ SSH (Secure Shell) into the VMs in your virtual network using Bastion.
 
 2. Close the Bastion connection to **vm-001** using the **exit** command. 
 
-3. Repeat the steps in Connect to a virtual machine to connect to **vm-002**. 
+3. Repeat the steps in [Connect to Virtual Machines](https://github.com/MiticaMatthews/Azure-Labs/edit/main/Labs/004/readme.md#connect-to-virtual-machines) to connect to **vm-002**. 
 
 4. For **vm-002**, run the following command in the browser terminal to test the connection:
    * `ping -c 5 vm-001`
