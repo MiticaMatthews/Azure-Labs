@@ -1,14 +1,24 @@
 ![rnt banner](https://github.com/user-attachments/assets/b4f39e86-612b-480e-9cbf-cd6c52e9e90f)
 
-In this write-up, I will walk you through the process of routing network traffic with a route table using the Azure portal. 
+In this write-up, I will walk you through the process of routing network traffic with a route table using the Azure portal. This lab will show you how to create **User-Defined Routes (UDRs)** to direct traffic between subnets through a **Network Virtual Appliance (NVA)**. As such, any outbound traffic will first be routed to the NVA before reaching the Private subnet.
+
+By the end of this write-up, you will have learned to: 
+1. Create a virtual network and subnets.
+2. Create an NVA that routes traffic.
+3. Deploy virtual machines (VMs) into different subnets.
+4. Create a route table.
+5. Create a route.
+6. Associate a route table to a subnet.
+7. Route traffic from one subnet to another through an NVA.
 
 ## What is Azure Routing
+Routing is the backbone of IP connectivity, essential for linking various services and enabling secure access to private networks. Azure provides two main types of routes: **System routes**, which are automatically created and assigned to subnets and cannot be removed, and **User-Defined Routes (UDRs)**, which offer custom routing options to override default routes and tailor traffic flow to meet specific needs. This tutorial will focus on **UDRs**, but understanding both default and custom routes is crucial for effectively managing and securing network traffic in Azure.
 
 ## Requirements 
-**Azure Account:** If you don't already have an Azure subscription, create a free account using the following link: https://azure.microsoft.com/en-gb/free/
+**Azure Account:** If you don't already have an Azure subscription, create a free account using the following link: https://azure.microsoft.com/en-gb/free/.
 
 ## Create a Virtual Network & an Azure Bastion Host
-1. Sign in to the [Azure Portal](https://portal.azure.com/)
+1. Sign in to the [Azure Portal](https://portal.azure.com/).
 
 2. Search for and select *virtual networks* in the portal.
 
@@ -73,13 +83,14 @@ You should see the following **Subnets** in your **vnet-001** virtual network:
 
 <img width="955" alt="subnet list" src="https://github.com/user-attachments/assets/193ab70e-87df-4a8e-88eb-ef5af2847cb5">
 
+**Note:** When deploying a Bastion host, Azure automatically creates a dedicated Bastion subnet to securely facilitate remote access to your virtual machines without needing public IP addresses. We will use Bastion to connect to the VMs later. 
 
 ## Create an Network Virtual Appliance (NVA) Virtual Machine
 Network Virtual Appliances (NVAs) are virtual machines that perform specific network functions, such as routing and firewall optimisation. In this section, we will create a NVA using an **Ubuntu 22.04** virtual machine. 
 
 1. In the portal, search for and select **Virtual machines**.
 
-2. On the **Virtual machines** page, select + **Create++ and then select **Azure virtual machine**.
+2. On the **Virtual machines** page, select + **Create** and then select **Azure virtual machine**.
 <img width="1090" alt="create VM-001" src="https://github.com/user-attachments/assets/718e10c4-f4ba-47b6-93bd-8d89b407d434">
 
 3. On the **Basics** tab, under **Project details**, select your subscription. Then, select the resource group (**rg-VN-001**) that you used to create your virtual network **vnet-001**.
@@ -130,28 +141,28 @@ The public virtual machine is used to simulate a machine in the public internet.
 
 1. In the portal, search for and select **Virtual machines**.
 
-2. On the **Virtual machines** page, select + **Create++ and then select **Azure virtual machine**.
+2. On the **Virtual machines** page, select + **Create** and then select **Azure virtual machine**.
 3. In **Create a virtual machine**, enter or select the following information in the **Basics** tab:
 
 |Setting	|Value |
 |----|----|
 |Project details |
 |Subscription	|Select your subscription. |
-|Resource group	|Select rg-VN-001. |
+|Resource group	|Select **rg-VN-001**. |
 |Instance details | 
-|Virtual machine name	|Enter vm-public. |
-|Region	|Select (Europe) UK South. |
-|Availability options	|Select No infrastructure redundancy required. |
-|Security type	|Select Standard. |
-|Image	|Select Ubuntu Server 22.04 LTS - x64 Gen2. |
+|Virtual machine name	|Enter **vm-public**. |
+|Region	|Select **(Europe) UK South**. |
+|Availability options	|Select **No infrastructure redundancy required**. |
+|Security type	|Select **Standard**. |
+|Image	|Select **Ubuntu Server 22.04 LTS - x64 Gen2**. |
 |VM architecture	|Leave the default of **x64**. |
-|Size	|Select Standard_B1s - 1 vcpu, 1 GiB memory ($8.61/month) (free services eligible). |
+|Size	|Select **Standard_B1s - 1 vcpu, 1 GiB memory ($8.61/month) (free services eligible)**. |
 |Administrator account |
-|Authentication type	|Select SSH public key. |
-|Username	|Enter a username e.g. azureuser. |
+|Authentication type	|Select **SSH public key**. |
+|Username	|Enter a username e.g. **azureuser**. |
 |Key pair name	|Use pre-generated key pair name or enter key pair name. |
 |Inbound port rules |	
-|Public inbound ports	|Select None. |
+|Public inbound ports	|Select **None**. |
 
 4. Select **Next: Disks** then **Next: Networking**.
 5. In the **Networking** tab, enter or select the following information:
@@ -159,10 +170,10 @@ The public virtual machine is used to simulate a machine in the public internet.
     |Setting	|Value |
     |----|----|
     |Network interface |
-    |Virtual network	|Select vnet-001. |
-    |Subnet	|Select subnet-001 (10.0.0.0/24). |
-    |Public IP	|Select None. |
-    |NIC network security group	|Select None. |
+    |Virtual network	|Select **vnet-001**. |
+    |Subnet	|Select **subnet-001** (**10.0.0.0/24**). |
+    |Public IP	|Select **None**. |
+    |NIC network security group	|Select **None**. |
 
 6. Leave the rest of the options at the defaults and select **Review + create**.
 7. Select **Create**.
@@ -171,28 +182,28 @@ The public virtual machine is used to simulate a machine in the public internet.
 ### Create Private Virtual Machine 
 1. In the portal, search for and select **Virtual machines**.
 
-2. On the **Virtual machines** page, select + **Create++ and then select **Azure virtual machine**.
+2. On the **Virtual machines** page, select + **Create** and then select **Azure virtual machine**.
 3. In **Create a virtual machine**, enter or select the following information in the **Basics** tab:
 
 |Setting	|Value |
 |----|----|
 |Project details |
 |Subscription	|Select your subscription. |
-|Resource group	|Select rg-VN-001. |
+|Resource group	|Select **rg-VN-001**. |
 |Instance details | 
-|Virtual machine name	|Enter vm-private. |
-|Region	|Select (Europe) UK South. |
-|Availability options	|Select No infrastructure redundancy required. |
-|Security type	|Select Standard. |
-|Image	|Select Ubuntu Server 22.04 LTS - x64 Gen2. |
+|Virtual machine name	|Enter **vm-private**. |
+|Region	|Select **(Europe) UK South**. |
+|Availability options	|Select **No infrastructure redundancy required**. |
+|Security type	|Select **Standard**. |
+|Image	|Select **Ubuntu Server 22.04 LTS - x64 Gen2**. |
 |VM architecture	|Leave the default of **x64**. |
-|Size	|Select Standard_B1s - 1 vcpu, 1 GiB memory ($8.61/month) (free services eligible). |
+|Size	|Select **Standard_B1s - 1 vcpu, 1 GiB memory ($8.61/month) (free services eligible)**. |
 |Administrator account |
-|Authentication type	|Select SSH public key. |
-|Username	|Enter a username e.g. azureuser. |
+|Authentication type	|Select **SSH public key**. |
+|Username	|Enter a username e.g. **azureuser**. |
 |Key pair name	|Use pre-generated key pair name or enter key pair name. |
 |Inbound port rules |	
-|Public inbound ports	|Select None. |
+|Public inbound ports	|Select **None**. |
 
 4. Select **Next: Disks** then **Next: Networking**.
 5. In the **Networking** tab, enter or select the following information:
@@ -200,10 +211,10 @@ The public virtual machine is used to simulate a machine in the public internet.
     |Setting	|Value |
     |----|----|
     |Network interface |
-    |Virtual network	|Select vnet-001. |
-    |Subnet	|Select subnet-private (10.0.2.0/24). |
-    |Public IP	|Select None. |
-    |NIC network security group	|Select None. |
+    |Virtual network	|Select **vnet-001**. |
+    |Subnet	|Select **subnet-private** (**10.0.2.0/24**). |
+    |Public IP	|Select **None**. |
+    |NIC network security group	|Select **None**. |
 
 6. Leave the rest of the options at the defaults and select **Review + create**.
 7. Select **Create**.
@@ -219,40 +230,45 @@ In this section, we will turn on IP forwarding for the network interface of the 
 2. In **Virtual machines**, select **vm-nva**.
 3. In **vm-nva**, select **Networking settings** under the **Networking** section.
 4. Select the name of the interface next to **'Network Interface:'**. The name begins with **vm-nva** and has a random number assigned to the interface. The name of the interface in this example is **vm-nva430**.
-   <img width="1054" alt="vm-nva network settings" src="https://github.com/user-attachments/assets/575bbab8-de4e-448e-9ebb-ec895208d7da">
 
+   <img width="1054" alt="vm-nva network settings" src="https://github.com/user-attachments/assets/575bbab8-de4e-448e-9ebb-ec895208d7da">
 
 5. In the network interface overview page, select **IP configurations**.
 6. In **IP configurations**, select the box next to **Enable IP forwarding**.
 7. Select **Apply**. 
-  <img width="963" alt="vm-nva enable ip forwarding" src="https://github.com/user-attachments/assets/c1b801e0-b538-4d18-b1dc-3933728a67f1">
-
+ 
+    <img width="963" alt="vm-nva enable ip forwarding" src="https://github.com/user-attachments/assets/c1b801e0-b538-4d18-b1dc-3933728a67f1">
 
 ### Enable IP Forwarding in the Operating System
-In this section, we will turn on IP forwarding for the operating system of the vm-nva virtual machine to forward network traffic and use the **Azure Bastion** service to connect to the **vm-nva** virtual machine.
+In this section, we will enable IP forwarding in the operating system of the **vm-nva** virtual machine to allow it to forward network traffic, and use the **Azure Bastion** service to securely connect to the **vm-nva** virtual machine.
 
 1. In the portal, search for and select **Virtual machines**.
 2. In **Virtual machines**, select **vm-nva**.
 3. Select **Bastion** in the **Connect** section.
 4. Select **SSH Private Key from Local File** for your **Authentication Type**.
 5. Enter your username, e.g. **azureuser**.
-6. Locate the SSH key file for the vm-nva virtual machine in your local directory.
+6. Locate the SSH key file for the **vm-nva** virtual machine in your local directory.
 7. Select **Connect**.
+   
    * **Note:** Once you press connect, a browser-based terminal should open with an established connection to your VM using the provided username and SSH key.
+
      <img width="754" alt="vm-nva enable bastion" src="https://github.com/user-attachments/assets/42b00946-8071-452c-a69b-f45f5e1898a2">
 
 8. Run the following commands in your browser terminal to enable IP forwarding:
    * Activate IP forwarding immediately:
+     
      `sudo sysctl -w net.ipv4.ip_forward=1`
 
    * Ensure the change is persistent across reboots:
+     
      `echo "net.ipv4.ip_forward = 1" | sudo tee -a /etc/sysctl.conf`
 
    * Apply changes made to the configuration file immediately:
+     
      `sudo sysctl -p` 
 
 ## Create a Route Table 
-In this section, we will create a route table to define the route of the traffic through the NVA virtual machine. The route table is associated to the subnet-001 subnet where the vm-public virtual machine is deployed.
+In this section, we will create a route table to define the route of the traffic through the **vm-nva** virtual machine. The route table is associated to the **subnet-001** subnet where the **vm-public** virtual machine is deployed.
 
 1. In the portal, search for and select **Route tables**.
 2. Select + **Create**.
@@ -261,9 +277,9 @@ In this section, we will create a route table to define the route of the traffic
    |----|----|
    |Project details |
    |Subscription	|Select your subscription. |
-   |Resource group	|Select rg-VN-001. |
+   |Resource group	|Select **rg-VN-001**. |
    |Instance details | 
-   |Region	|Select (Europe) UK South. |
+   |Region	|Select **(Europe) UK South**. |
    |Name	|Enter **route-table-public**. |
    |Propagate gateway routes	|Leave the default of **Yes**. |
 
@@ -281,12 +297,13 @@ In this section, we will create a route in the route table that you created in t
 
    |Setting	|Value |
    |----|----|
-   |Route name|	Enter to-private-subnet. |
-   |Destination type|	Select IP Addresses. |
-   |Destination IP addresses/CIDR ranges|	Enter 10.0.2.0/24. |
-   |Next hop type|	Select Virtual appliance. |
-   |Next hop address|	Enter 10.0.3.4.
-   |This is the IP address you of vm-nva you created in the earlier steps.. |
+   |Route name|	Enter **to-private-subnet**. |
+   |Destination type|	Select **IP Addresses**. |
+   |Destination IP addresses/CIDR ranges|	Enter **10.0.2.0/24**. |
+   |Next hop type|	Select **Virtual appliance**. |
+   |Next hop address|	Enter **10.0.3.4**. |
+
+   **Note:** `10.0.3.4` is the IP address of the **vm-nva** virtual machine you created in the earlier steps.
 
    <img width="828" alt="route" src="https://github.com/user-attachments/assets/ab7723ed-0d44-4e5a-bd57-7feb11764c93">
 
@@ -297,22 +314,23 @@ In this section, we will create a route in the route table that you created in t
 
   |Setting	|Value |
   |----|----|
-  |Virtual network	|Select vnet-001 (rg-VN-001). |
-  |Subnet	|Select subnet-001. |
+  |Virtual network	|Select **vnet-001 (rg-VN-001)**. |
+  |Subnet	|Select **subnet-001**. |
+ 
   <img width="580" alt="Associate subnet" src="https://github.com/user-attachments/assets/2282ffdf-56e8-4dd7-8337-54449ea63514">
 
 10. Select **OK**. 
 
 ## Test Routing of Network Traffic 
-Next, we will test routing 
+Next, we will test routing. 
 
 ### Test Network Traffic from public-VM to private-VM. 
-1. In the portal, search for and select **Virtual machines**
+1. In the portal, search for and select **Virtual machines**.
 2. In **Virtual machines**, select **vm-public**.
 3. Select **Bastion** in the **Connect** section.
 4. Select **SSH Private Key from Local File** for your **Authentication Type**.
 5. Enter your username, e.g. **azureuser**.
-6. Locate the SSH key file for the vm-public virtual machine in your local directory.
+6. Locate the SSH key file for the **vm-public** virtual machine in your local directory.
 7. Select **Connect**.
    * **Note:** Once you press connect, a browser-based terminal should open with an established connection to your VM using the provided username and SSH key.
 8. In the terminal, run the following command to trace the routing of network traffic from vm-public to vm-private:
@@ -328,17 +346,17 @@ Next, we will test routing
    Resume: pmtu 1500 hops 2 back 1 
    ```
 
-  **Note:** In the tracepath output, you’ll notice two hops when ICMP traffic travels from **vm-public** to **vm-private**. The first hop is **vm-nva**, and the second hop is **vm-private**. This indicates that Azure routed the traffic from **subnet-001** through the NVA to reach **subnet-private**, as specified by the **to-private-subnet** route in **route-table-public**.
+    **Note:** In the tracepath output, you’ll notice two hops when ICMP traffic travels from **vm-public** to **vm-private**. The first hop is **vm-nva**, and the second hop is **vm-private**. This indicates that Azure routed the traffic from **subnet-001** through the NVA to reach **subnet-private**, as specified by the **to-private-subnet** route in **route-table-public**.
 
 9. Close the Bastion connection. 
 
 ### Test Network Traffic from private-VM to public-VM.
-1. In the portal, search for and select **Virtual machines**
+1. In the portal, search for and select **Virtual machines**.
 2. In **Virtual machines**, select **vm-private**.
 3. Select **Bastion** in the **Connect** section.
 4. Select **SSH Private Key from Local File** for your **Authentication Type**.
 5. Enter your username, e.g. **azureuser**.
-6. Locate the SSH key file for the vm-private virtual machine in your local directory.
+6. Locate the SSH key file for the **vm-private** virtual machine in your local directory.
 7. Select **Connect**.
    * **Note:** Once you press connect, a browser-based terminal should open with an established connection to your VM using the provided username and SSH key.
 8. In the terminal, run the following command to trace the routing of network traffic from vm-public to vm-private:
@@ -353,7 +371,7 @@ Next, we will test routing
    Resume: pmtu 1500 hops 1 back 2 
    ```
 
-   **Note:** In the tracepath output above, there’s a single hop to **vm-public**, which shows that traffic went directly from **subnet-private** to **subnet-001**. By default, Azure routes traffic directly between subnets without additional routing rules.
+     **Note:** In the tracepath output above, there’s a single hop to **vm-public**, which shows that traffic went directly from **subnet-private** to **subnet-001**. By default, Azure routes traffic directly between subnets without additional routing rules.
   
 9. Close the Bastion connection. 
 
