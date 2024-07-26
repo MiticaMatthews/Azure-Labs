@@ -280,6 +280,86 @@ Now that we have created peering connections between the virtual networks, we wi
     False                    False                  True                         False                        Marketing-VNet-to-Finance-VNet      Connected       FullyInSync         Succeeded            rg-VNpeering-001  30090345-7c04-0456-04f6-6214d920a805  False
     ```
 
-    **Note:** Your **PeeringState** should read **Connected**. Unlike the other two VNets **Engineering-VNet** and **Finance-VNet**, we created two connections from the **Marketing-VNet**: 1. Marketing-VNet-to-Engineering-VNet; and 2. Marketing-VNet-to-Finance-VNet, so there should be two connections in the output. 
+    **Note:** Your **PeeringState** should read **Connected**. Unlike the other two VNets **Engineering-VNet** and **Finance-VNet**, we created two connections from the **Marketing-VNet**: 1. Marketing-VNet-to-Engineering-VNet; and 2. Marketing-VNet-to-Finance-VNet, so there should be two connections in the output.
+
+## Communicate Between Virtual Machines
+In the previous section, we configured peering connections between the virtual networks using a hub and spoke topology, enabling resources to communicate with each other. The Marketing-VNet was the hub, and the Engineering-VNet and Finance-VNet were spokes.
+
+It is important to note that peering is a non-transitive relationship, meaning each network you want to connect must be directly linked. Since the Marketing-VNet acts as the hub, connecting to both Engineering-VNet and Finance-VNet, the Marketing-VNet is able to communicate with both virtual networks, and they can communicate with it. However, since the Engineering-VNet and Finance-VNet do not connect directly to each other, communication between these virtual networks is not permitted.
+
+### Test Virtual Machine Connectivity Using Secure Shell (SSH)
+14. To connect to the virtual machines, we will need to use the `ssh` command. If you did not note the **public IP address** of your VMs, you can run the following command to get the public and private IP addressess of your VMs:
     
+
+    ```
+    az vm list-ip-addresses --resource-group rg-VNpeering-001 --output table
+    ```
+
+    Example output:
+
+    ```
+    VirtualMachine    PublicIPAddresses    PrivateIPAddresses
+    ----------------  -------------------  --------------------
+    FinanceVM01       52.236.125.254       10.3.1.4
+    EngineeringVM01   20.16.57.95          10.1.1.4
+    MarketingVM01     20.16.57.119         10.2.1.4
+    ```
+
+16. Next, open a SSH connection to the virtual machine of your choice using the following syntax:
+
+    ```
+    ssh username@publicIPaddress
+    ```
+
+    You may recall that we used **azureuser** as the username in a previous step. For this example, we will **SSH** into the **MarketingVM01**, and then run the following command:
+
+    ```
+    ssh azureuser@20.16.57.119
+    ```
+
+    **Note:** The first time you attempt to log onto a Linux virtual machine, you may get a warning about adding the server fingerprint to a list of known hosts. In this case, I am okay with proceeding, so I select "yes".
+
+    <img width="806" alt="marketing-VNet ssh" src="https://github.com/user-attachments/assets/c3e1fad6-e94d-42cb-a244-c165ac5d26b5">
+
+17. Once you are connected to the **MarketingVM01** virtual machine, use the `ping` command to test connectivity to another virtual machine. In this example, we will test connectivity to the **EngineeringVM01** and the **FinanceVM01** in turn.
+
+    Ping the **EngineeringVM01** using its **private IP address**:
+
+    ```
+    ping -c 5 10.1.1.4
+    ```
+
+    **Note:** You should receive five replies. If the target virtual machine is in a virtual network that is not peered with the source VM's network, you will receive zero replies.
+
+    Example output:
+
+    <img width="697" alt="ping eng-vnet" src="https://github.com/user-attachments/assets/9c595b49-9cc2-4507-814f-3e46a317b861">
+
+    Next, ping the **FinanceVM01** using its **private IP address**:
+
+    ```
+    ping -c 5 10.3.1.4
+    ```
+
+    **Note:** You should receive five replies. If the target virtual machine is in a virtual network that is not peered with the source VM's network, you will receive zero replies.
+
+    Example output:
+
+    <img width="628" alt="ping finance-VNet" src="https://github.com/user-attachments/assets/39814971-8bb2-4c85-bef1-fbc8e6652206">
+
+    Use the `exit` command to close the **SSH** connection to **MarketingVM01**.
+
+    Now, repeat steps **15**, **16** and **17** for the next machine, and so on.
+
 ## Delete Resources 
+When the resources that you created are no longer needed, you can delete the resource group and all its resources by running the following command:
+
+```
+az group delete --name rg-VNpeering-001 --yes --no-wait
+```
+
+You can verify the status of the resource group deletion by running:
+
+```
+az group list --output table
+```
